@@ -1,108 +1,97 @@
 <script lang="ts" setup>
-import type { Inventory, Provider, RawMaterial } from '@prisma/client';
-type InventoryWithDetails = Inventory & { RawMaterial: RawMaterial, Provider: Provider };
+import type { Category, Inventory, Provider, RawMaterial } from '@prisma/client';
+import InventoryAddModal from '~/components/Inventory/AddModal.vue';
+type InventoryWithDetails = Inventory & { RawMaterial: RawMaterial & { Category: Category }, Provider: Provider };
 
 const inventoryItems = ref<InventoryWithDetails[]>([]);
+const showAddModal = ref(false);
 
 const fetchInventoryItems = async () => {
     const { data } = await useFetch<InventoryWithDetails[]>('/api/inventory');
     inventoryItems.value = data.value || [];
 };
 
-const rawMaterials = ref<RawMaterial[]>([]);
+const handleAddButtonClick = () => showAddModal.value = true;
 
-const fetchRawMaterials = async () => {
-    const { data } = await useFetch<RawMaterial[]>('/api/rawMaterials');
-    rawMaterials.value = data.value || [];
-};
-
-const providers = ref<Provider[]>([]);
-
-const fetchProviders = async () => {
-    const { data } = await useFetch<Provider[]>('/api/providers');
-    providers.value = data.value || [];
+const onCloseAddModal = () => {
+    showAddModal.value = false;
+    fetchInventoryItems();
 };
 
 onMounted(() => {
     fetchInventoryItems();
-    fetchRawMaterials();
-    fetchProviders();
 });
 
-const priceKilo = ref(0);
-const rawMaterialId = ref(0);
-const providerId = ref(0);
+const searchInput = ref('');
 
-const handleAddNewItem = async () => {
-    await useFetch('/api/inventory/add', {
-        method: 'POST',
-        body: JSON.stringify({
-            priceKilo: priceKilo.value,
-            rawMaterialId: rawMaterialId.value,
-            providerId: providerId.value
-        })
+const removeAccents = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+const filteredInventoryItems = computed(() => {
+    if (!searchInput.value) return inventoryItems.value;
+    const searchValue = removeAccents(searchInput.value.toLowerCase());
+    const filteredItems = inventoryItems.value.filter(item => 
+        removeAccents(item.RawMaterial.name.toLowerCase()).includes(searchValue) ||
+        removeAccents(item.RawMaterial.Category.name.toLowerCase()).includes(searchValue)
+    );
+    
+    return !filteredItems.length ? inventoryItems.value : filteredItems;
+});
+
+const sortBy = (field: string) => {
+    inventoryItems.value.sort((a, b) => {
+        let result = 0;
+        switch (field) {
+            case 'id':
+                result = a.id - b.id;
+                break;
+            case 'name':
+                result = a.RawMaterial.name.localeCompare(b.RawMaterial.name);
+                break;
+            case 'priceKilo':
+                result = a.priceKilo - b.priceKilo;
+                break;
+            case 'provider':
+                result = a.Provider.name.localeCompare(b.Provider.name);
+                break;
+        }
+        return result;
     });
-
-    fetchInventoryItems();
 };
 </script>
 
 <template>
-    <div class="flex">
-
-        <div>
-            <h1>Inventory</h1>
-
-            <form @submit.prevent="handleAddNewItem">
-                <div>
-                    <label for="rawMaterialId">Raw Material</label>
-                    <select id="rawMaterialId" v-model="rawMaterialId">
-                        <option v-for="material in rawMaterials" :key="material.id" :value="material.id">{{
-                            material.name }}
-                        </option>
-                    </select>
-                </div>
-                <div>
-                    <label for="providerId">Provider</label>
-                    <select id="providerId" v-model="providerId">
-                        <option v-for="provider in providers" :key="provider.id" :value="provider.id">{{ provider.name
-                            }}
-                        </option>
-                    </select>
-                </div>
-                <div>
-                    <label for="priceKilo">Price Kilo</label>
-                    <div class="relative">
-                        <input id="priceKilo" required v-model="priceKilo" type="number" placeholder="Price Kilo"
-                            class="pl-6" />
-                        <span
-                            class="absolute left-2 top-1/2 -translate-y-1/2 transform font-bold text-gray-500">€</span>
-                    </div>
-                </div>
-                <button type="submit">Add</button>
-            </form>
-
+    <div>
+        
+        <h1>Inventory</h1>
+        
+        <div class="flex flex-row justify-between">
+            <input v-model="searchInput" type="text" placeholder="Search for an item" />
+            <button @click="handleAddButtonClick" class="mb-4 rounded bg-blue-500 px-4 py-2 text-white">Add new item to inventory</button>
         </div>
 
-        <ul>
+        <ul class="mt-8">
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Price Kilo</th>
+                        <th @click="sortBy('id')">ID</th>
+                        <th @click="sortBy('name')">Matière première</th>
+                        <th @click="sortBy('provider')">Fournisseur</th>
+                        <th @click="sortBy('priceKilo')">Prix au kilo</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="item in inventoryItems" :key="item.id">
+                    <tr v-for="item in filteredInventoryItems" :key="item.id">
                         <td>{{ item.id }}</td>
                         <td>
                             <NuxtLink :to="`/inventory/${item.id}`">{{ item.RawMaterial.name }}</NuxtLink>
                         </td>
+                        <td>{{ item.Provider.name }}</td>
                         <td>{{ item.priceKilo }}</td>
                     </tr>
                 </tbody>
             </table>
         </ul>
+
+        <InventoryAddModal v-if="showAddModal" @close="onCloseAddModal" />
     </div>
 </template>

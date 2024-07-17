@@ -4,10 +4,14 @@ export default defineNuxtConfig({
   modules: ["@prisma/nuxt"],
 
   postcss: {
-      plugins: {
-          tailwindcss: {},
-          autoprefixer: {},
-      },
+    plugins: {
+      tailwindcss: {},
+      autoprefixer: {},
+    },
+  },
+
+  prisma: {
+    autoSetupPrisma: true,
   },
 
   compatibilityDate: "2024-07-17",

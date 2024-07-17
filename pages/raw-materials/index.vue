@@ -52,7 +52,7 @@ const handleAddNewRawMaterial = async () => {
                 </div>
                 <div>
                     <label for="description">Description</label>
-                    <input id="description" required v-model="description" type="text" placeholder="Description" />
+                    <input id="description" v-model="description" type="text" placeholder="Description" />
                 </div>
                 <div>
                     <label for="category">Category</label>
