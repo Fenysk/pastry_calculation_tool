@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+h1 {
+    @apply text-2xl font-bold;
+}
+
+h2 {
+    @apply text-xl font-bold;
+}
+
+h3 {
+    @apply text-lg font-bold;
+}
+
+ul {
+    @apply list-disc;
+}
+
+ol {
+    @apply list-decimal;
+}
+
+form {
+    @apply mx-4 my-8 flex min-w-96 flex-col gap-4 rounded-md border-2 bg-gray-100 p-4;
+
+    div {
+        @apply flex flex-col gap-2;
+    }
+
+    label {
+        @apply pl-2 font-bold text-gray-700;
+    }
+
+    input {
+        @apply rounded-md border-2 border-gray-300 p-2;
+    }
+
+    button {
+        @apply rounded-md bg-blue-500 p-2 font-semibold text-white;
+    }
+
+    select {
+        @apply rounded-md border-2 border-gray-300 p-2;
+
+        option {
+            @apply p-2;
+        }
+    }
+}
+
+table {
+    @apply rounded-md border-2 border-gray-300 p-2;
+
+    th {
+        @apply bg-gray-200 px-4 py-2 text-gray-700;
+    }
+
+    td {
+        @apply px-4 py-1 text-gray-700;
+    }
+
+    tr:nth-child(even) {
+        @apply bg-gray-100;
+    }
+}
